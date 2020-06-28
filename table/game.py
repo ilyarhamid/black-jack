@@ -42,6 +42,7 @@ class Game(object):
     def check_the_shoe(self):
         if len(self.deck.deck) / self.deck.original < self.shoe_pct:
             self.deck.refresh()
+            self.deck.shuffle()
 
     def first_deal(self):
         all_players = [self.dealer, self.key_player]
@@ -66,19 +67,21 @@ class Game(object):
     def single_player(self, p: Player, flag=False) -> None:
         self.player_split(p)
         h_count = 1
-        for h in p.hands:
-            if self.log and flag:
-                print(f"Hand {h_count}")
-                h_count += 1
-            if flag:
-                if self.betting == "MIT":
-                    true_count = self.deck.count / round(len(self.deck.deck) / 52.0)
-                    if true_count > 2:
-                        unit = true_count - 1.0
-                    else:
-                        unit = 1.0
+        unit = 0
+        if flag:
+            if self.betting == "MIT":
+                true_count = self.deck.count / round(len(self.deck.deck) / 52.0)
+                if true_count > 2:
+                    unit = true_count - 1.0
                 else:
                     unit = 1.0
+            else:
+                unit = 1.0
+        for h in p.hands:
+            if flag:
+                if self.log:
+                    print(f"Hand {h_count}")
+                    h_count += 1
                 h.bet = unit
                 p.money = p.money - unit
             while True:
@@ -136,7 +139,12 @@ class Game(object):
                         print([c.value for c in self.dealer.hands[0].cards])
                     break
             if self.rule == "H17":
-                if val >= 17 and hard_soft == "Hard":
+                if val > 17:
+                    if self.log:
+                        print("Dealer Stand!")
+                        print([c.value for c in self.dealer.hands[0].cards])
+                    break
+                elif val == 17 and hard_soft == "Hard":
                     if self.log:
                         print("Dealer Stand!")
                         print([c.value for c in self.dealer.hands[0].cards])

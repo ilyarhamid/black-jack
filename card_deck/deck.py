@@ -34,3 +34,4 @@ class Deck(object):
 
     def refresh(self):
         self.deck = build_deck(self.num_pair, joker=self.joker)
+        self.count = 0
