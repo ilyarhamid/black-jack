@@ -17,6 +17,7 @@ class Deck(object):
         self.joker = joker
         self.num_pair = num_pair
         self.deck = build_deck(num_pair, joker=joker)
+        self.original = len(self.deck)
         self.count = 0
 
     def shuffle(self) -> None:
