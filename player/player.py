@@ -35,7 +35,7 @@ class Hand(object):
         best_value = 0
         ace_count = 0
         for v in v_list:
-            if v == 1:
+            if v == 11:
                 ace_count += 1
                 best_value -= 10
             best_value += v

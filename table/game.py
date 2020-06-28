@@ -52,12 +52,15 @@ class Game(object):
                 )
                 self.player_split(p)
 
-    def single_player(self, p: Player) -> None:
+    def single_player(self, p: Player, flag=False, unit=1.0) -> None:
         self.player_split(p)
         print("Player Hands Split!")
         h_count = 1
         for h in p.hands:
             print(f"Hand {h_count}")
+            if flag:
+                h.bet = unit
+                p.money = p.money - unit
             while True:
                 act = h.get_action(value_dict[self.dealer.hands[0].cards[0].value])
                 if act == "H":
@@ -68,7 +71,14 @@ class Game(object):
                     break
                 if act == "D":
                     h.cards.append(self.deck.deal())
+                    p.money -= h.bet
+                    h.bet = h.bet * 2.0
                     print(f"Double: {[c.value for c in h.cards]}")
+                    break
+                if act == "R":  # In case of surrender,
+                    p.money += 0.5 * h.bet  # return half of the betting money to the player
+                    h.bet = -0.5 * h.bet  # negative value is for marking purpose. This will be turned to positive value
+                    print(f"Surrender: {[c.value for c in h.cards]}")
                     break
                 if act == "Bust":
                     print(f"Bust: {[c.value for c in h.cards]}")
@@ -76,7 +86,7 @@ class Game(object):
 
     def player_round(self) -> None:
         print("----------------- Key Player Turn ---------------")
-        self.single_player(self.key_player)
+        self.single_player(self.key_player, flag=True)
         icount = 1
         for ply in self.players:
             print(f"----------------- Player {icount} Turn ---------------")
@@ -108,10 +118,15 @@ class Game(object):
 
     def wrap_up(self) -> None:
         dealer_value, dealer_mock = self.dealer.hands[0].best_value()
+        dealer_black_jack = (dealer_value == 21) and (len(self.dealer.hands[0].cards) == 2)
         for h in self.key_player.hands:
+            if h.bet < 0:  # Negative betting value means player surrendered
+                h.bet = abs(h.bet)  # change the value to positive
+                continue
             hand_value, hand_mock = h.best_value()
             if hand_value == 21 and len(h.cards) == 2:
-                h.bet = h.bet * 2.5
+                if not dealer_black_jack:
+                    h.bet = h.bet * 2.5
             elif hand_value > 21:
                 h.bet = 0
             else:
@@ -123,12 +138,15 @@ class Game(object):
                     elif dealer_value < hand_value:
                         h.bet = h.bet * 2.0
             self.key_player.money += h.bet
+#       Clear Hands
+        self.dealer.hands = [Hand([])]
+        self.key_player.hands = [Hand([])]
+        for p in self.players:
+            p.hands = [Hand([])]
 
     def run(self) -> None:
         self.first_deal()
-        print("Player Round...")
         self.player_round()
         print("----------------- Dealer Turn ---------------")
         self.dealer_round()
-        print("Wrapping Up...")
         self.wrap_up()
